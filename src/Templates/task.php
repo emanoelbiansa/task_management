@@ -3,25 +3,22 @@
 <main>
     <h2>Your Tasks</h2>
 
-    <!-- Task Submission Form -->
-    <form class="task-form" method="POST" action="../public/task.php">
-        <textarea name="task" placeholder="New task..." required></textarea>
+    <!-- Form to add new task -->
+    <form method="POST" action="/task.php">
+        <input type="text" name="task" placeholder="New Task" required>
         <button type="submit">Add Task</button>
     </form>
 
-    <!-- Display Existing Tasks -->
-    <div class="task-list">
-        <?php if (!empty($tasks)): ?>
-            <?php foreach ($tasks as $task): ?>
-                <div class="task">
-                    <h3><?php echo htmlspecialchars($task['task']); ?></h3>
-                    <small>Created on: <?php echo date('F j, Y, g:i a', strtotime($task['created_at'])); ?></small>
-                </div>
-            <?php endforeach; ?>
-        <?php else: ?>
-            <p>No tasks found. Start by adding a task!</p>
-        <?php endif; ?>
-    </div>
+    <h3>Task List:</h3>
+    <ul>
+        <?php foreach ($tasks as $task): ?>
+            <li>
+                <?php echo htmlspecialchars($task['task']); ?> - <?php echo $task['created_at']; ?>
+                <a href="?delete=<?php echo $task['id']; ?>">Delete</a>
+                <!-- Add Update functionality here if needed -->
+            </li>
+        <?php endforeach; ?>
+    </ul>
 </main>
 
 <?php include '../include/footer.php'; ?>
