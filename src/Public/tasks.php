@@ -1,91 +1,47 @@
 <?php
+// Include the database connection
+include '../include/db.php';
 session_start();
-if (!isset($_SESSION['user_id'])) {
-    header("Location: login.html");
-    exit;
+
+// Ensure user is logged in
+if (!isset($_SESSION['username'])) {
+    header("Location: /login.php");
+    exit();
 }
 
-require_once __DIR__ . '/../Include/db.php';
-
-// Create connection
-$conn = new mysqli($servername, $username, $password, $dbname);
-
-// Check connection
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
-}
-
-// Add task
+// Handle task submission
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['task'])) {
     $task = $_POST['task'];
-    $user_id = $_SESSION['user_id'];
+    $user_id = $_SESSION['user_id'];  // Assuming user_id is stored in session upon login
 
-    $sql = "INSERT INTO tasks (user_id, task) VALUES (?, ?)";
-    $stmt = $conn->prepare($sql);
+    // Prepare and bind the query to insert task into the database
+    $stmt = $conn->prepare("INSERT INTO tasks (user_id, task) VALUES (?, ?)");
     $stmt->bind_param("is", $user_id, $task);
     $stmt->execute();
     $stmt->close();
 }
 
-// Delete task
-if (isset($_GET['delete'])) {
-    $task_id = $_GET['delete'];
-
-    $sql = "DELETE FROM tasks WHERE id = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $task_id);
-    $stmt->execute();
-    $stmt->close();
-}
-
-// Fetch tasks
+// Fetch tasks for the logged-in user
 $user_id = $_SESSION['user_id'];
-$sql = "SELECT id, task FROM tasks WHERE user_id = ?";
-$stmt = $conn->prepare($sql);
+$stmt = $conn->prepare("SELECT id, task, created_at FROM tasks WHERE user_id = ? ORDER BY created_at DESC");
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
-$result = $stmt->get_result();
-$tasks = $result->fetch_all(MYSQLI_ASSOC);
+$stmt->store_result();
+$stmt->bind_result($id, $task, $created_at);
+
+// Collect tasks into an array
+$tasks = [];
+while ($stmt->fetch()) {
+    $tasks[] = [
+        'id' => $id,
+        'task' => $task,
+        'created_at' => $created_at
+    ];
+}
+
 $stmt->close();
-
 $conn->close();
-?>
 
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Your Tasks</title>
-    <link rel="stylesheet" href="tasks.css" />
-  </head>
-  <body>
-    <header>
-      <nav>
-        <ul>
-          <li><a href="/../Templates/index.html">Home</a></li>
-          <li><a href="logout.php">Logout</a></li>
-        </ul>
-      </nav>
-    </header>
-    <main>
-      <h1>
-        Halo,
-        <?php echo htmlspecialchars($_SESSION['username']); ?>
-      </h1>
-      <h2>Silahkan masukkan tugas baru anda!</h2>
-      <form method="post" action="tasks.php">
-        <input type="text" name="task" placeholder="Tugas Baru" required />
-        <button type="submit">Tambah</button>
-      </form>
-      <ul>
-        <?php foreach ($tasks as $task): ?>
-        <li>
-          <?php echo htmlspecialchars($task['task']); ?>
-          <a href="tasks.php?delete=<?php echo $task['id']; ?>">Delete</a>
-        </li>
-        <?php endforeach; ?>
-      </ul>
-    </main>
-  </body>
-</html>
+// Include the template to render the view
+include '../templates/task.php';
+?>

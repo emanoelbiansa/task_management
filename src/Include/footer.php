@@ -1,5 +1,8 @@
+<!-- footer.php -->
 <footer>
-        <p>&copy; <?php echo date('Y'); ?> My Website. All Rights Reserved.</p>
-    </footer>
+    <div class="container">
+        <p>&copy; 2024 Task Management. All rights reserved.</p>
+    </div>
+</footer>
 </body>
 </html>
